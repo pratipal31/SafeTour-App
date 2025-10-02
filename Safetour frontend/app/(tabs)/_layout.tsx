@@ -1,13 +1,13 @@
 import { ImageBackground,Image,View, Text } from 'react-native'
 import React from 'react'
-import { Tabs } from 'expo-router'
+import { Tabs, Stack } from 'expo-router'
 import { images } from '@/constants/images'
 import { icons } from '@/constants/icons'
 
 const TabIcon=({focused,icon,title}:any)=>{
     if(focused){
     return (
-            <ImageBackground className="flex flex-row w-full flex-1 min-w-[112px] min-h-16 mt-4 justify-center items-center rounded-full     overflow-hidden bg-pink-100" 
+            <ImageBackground className="flex flex-row w-full flex-1 min-w-[112px] min-h-16 mt-4 justify-center items-center rounded-full     overflow-hidden bg-amber-100    " 
                     >
              <Image source={icon} tintColor="#151312" className="size-5" />
                 <Text className="text-secondary text-base font-semibold ml-2">{title}</Text>
