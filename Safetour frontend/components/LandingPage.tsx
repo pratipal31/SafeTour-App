@@ -7,12 +7,12 @@ const LandingPage = () => {
 
   const router =useRouter();  
   const handleLogin = () => {
-    router.push("/login")
+    router.push("/sign-in")
     
   }
 
   const handleSignUp = () => {
-    router.push("/signup")
+    router.push("/sign-up")
   }
 
   return (

@@ -3,14 +3,13 @@ import { Link, useRouter } from 'expo-router'
 import { Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 
-export default function Page() {
+export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn()
   const router = useRouter()
 
   const [emailAddress, setEmailAddress] = React.useState('')
   const [password, setPassword] = React.useState('')
 
-  // Handle the submission of the sign-in form
   const onSignInPress = async () => {
     if (!isLoaded) return
 
@@ -33,21 +32,21 @@ export default function Page() {
 
   return (
     <View className="flex-1 justify-center items-center bg-white px-6">
-      <Text className="text-2xl font-bold mb-6 text-gray-800">Sign in</Text>
+      <Text className="text-3xl font-bold mb-6 text-gray-800">Sign in</Text>
 
       <TextInput
         autoCapitalize="none"
         value={emailAddress}
         placeholder="Enter email"
-        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
+        onChangeText={setEmailAddress}
         className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
       />
 
       <TextInput
         value={password}
         placeholder="Enter password"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
+        secureTextEntry
+        onChangeText={setPassword}
         className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base"
       />
 
@@ -60,8 +59,8 @@ export default function Page() {
         </Text>
       </TouchableOpacity>
 
-      <View className="flex-row justify-center">
-        <Text className="text-gray-600 mr-1">Don’t have an account?</Text>
+      <View className="flex-row justify-center items-center">
+        <Text className="text-gray-600 mr-1">Don't have an account?</Text>
         <Link href="/sign-up" asChild>
           <TouchableOpacity>
             <Text className="text-purple-600 font-semibold">Sign up</Text>
