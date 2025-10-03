@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { useSignUp } from '@clerk/clerk-expo'
 import { Link, useRouter } from 'expo-router'
+import { OAuthButtons } from '@/components/OAuthButton'
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp()
@@ -39,7 +40,7 @@ export default function SignUpScreen() {
 
       if (signUpAttempt.status === 'complete') {
         await setActive({ session: signUpAttempt.createdSessionId })
-        router.replace('/')
+        router.replace('/(tabs)/home')
       } else {
         console.error(JSON.stringify(signUpAttempt, null, 2))
       }
@@ -94,6 +95,10 @@ export default function SignUpScreen() {
       >
         <Text className="text-center text-white font-semibold text-lg">Continue</Text>
       </TouchableOpacity>
+        <Text className="text-gray-500 my-2">or</Text>
+      
+            {/* Google OAuth Button */}
+      <OAuthButtons />
 
       <View className="flex-row justify-center items-center">
         <Text className="text-gray-600 mr-1">Already have an account?</Text>

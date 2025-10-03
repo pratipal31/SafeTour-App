@@ -6,13 +6,13 @@ export default function AuthRoutesLayout() {
   const { isSignedIn } = useAuth()
 
   if (isSignedIn) {
-    return <Redirect href={'/(tabs)/profile'} />
+    return <Redirect href={'/(tabs)/home'} />
   }
     
   
 
   return <Stack>
-    <Stack.Screen name="login" options={{ headerShown: false }} />
-    <Stack.Screen name="signup" options={{ headerShown: false }} />
+    <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+    <Stack.Screen name="sign-up" options={{ headerShown: false }} />
     </Stack>
 }
