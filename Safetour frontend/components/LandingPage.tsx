@@ -1,117 +1,113 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
-import React from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { View, Text, TouchableOpacity, ScrollView , Image } from 'react-native';
+import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 const LandingPage = () => {
-
-  const router =useRouter();  
+  const router = useRouter();
   const handleLogin = () => {
-    router.push("/sign-in")
-    
-  }
+    router.push('/sign-in');
+  };
 
   const handleSignUp = () => {
-    router.push("/sign-up")
-  }
+    router.push('/sign-up');
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-blue-600">
-      <View className="flex-1 px-8 py-12 justify-between">
+      <View className="flex-1 justify-between px-8 py-12">
         {/* Header Section */}
-        <View className="items-center mt-16">
-          <View className="bg-white/20 rounded-full px-6 py-2 mb-6">
-            <Text className="text-white text-xs font-semibold tracking-widest">
+        <View className="mt-16 items-center">
+          <View className="mb-6 rounded-full bg-white/20 px-6 py-2">
+            <Text className="text-xs font-semibold tracking-widest text-white">
               YOUR TRAVEL COMPANION
             </Text>
           </View>
-          
-          <Text className="text-white text-6xl font-bold text-center mb-6">
-            SafeTour
-          </Text>
-          
-          <Text className="text-white/90 text-xl text-center leading-8 px-6 mt-2">
+
+          <View className="mb-6 flex-row items-center justify-center">
+            <Text className="mr-3 text-center text-6xl font-bold text-white">SafeTour</Text>
+            <Image
+              source={require('@/assets/images/logo.png')} // 👈 adjust path
+              className="h-14 w-14"
+              resizeMode="contain"
+            />
+          </View>
+          <Text className="mt-2 px-6 text-center text-xl leading-8 text-white/90">
             Explore the world with confidence. Your safety, our priority.
           </Text>
         </View>
 
         {/* Feature Icons Section */}
-        <View className="flex-row justify-around px-2 my-8">
+        <View className="my-8 flex-row justify-around px-2">
           <View className="items-center">
-            <View className="bg-white/20 rounded-2xl w-20 h-20 items-center justify-center mb-3">
+            <View className="mb-3 h-20 w-20 items-center justify-center rounded-2xl bg-white/20">
               <Text className="text-4xl">🛡️</Text>
             </View>
-            <Text className="text-white text-sm font-semibold">Secure</Text>
+            <Text className="text-sm font-semibold text-white">Secure</Text>
           </View>
-          
+
           <View className="items-center">
-            <View className="bg-white/20 rounded-2xl w-20 h-20 items-center justify-center mb-3">
+            <View className="mb-3 h-20 w-20 items-center justify-center rounded-2xl bg-white/20">
               <Text className="text-4xl">🌍</Text>
             </View>
-            <Text className="text-white text-sm font-semibold">Global</Text>
+            <Text className="text-sm font-semibold text-white">Global</Text>
           </View>
-          
+
           <View className="items-center">
-            <View className="bg-white/20 rounded-2xl w-20 h-20 items-center justify-center mb-3">
+            <View className="mb-3 h-20 w-20 items-center justify-center rounded-2xl bg-white/20">
               <Text className="text-4xl">⚡</Text>
             </View>
-            <Text className="text-white text-sm font-semibold">Fast</Text>
+            <Text className="text-sm font-semibold text-white">Fast</Text>
           </View>
-          
+
           <View className="items-center">
-            <View className="bg-white/20 rounded-2xl w-20 h-20 items-center justify-center mb-3">
+            <View className="mb-3 h-20 w-20 items-center justify-center rounded-2xl bg-white/20">
               <Text className="text-4xl">💼</Text>
             </View>
-            <Text className="text-white text-sm font-semibold">Reliable</Text>
+            <Text className="text-sm font-semibold text-white">Reliable</Text>
           </View>
         </View>
 
         {/* Bottom Section with Buttons */}
         <View className="mb-6">
           {/* Benefits List */}
-          <View className="bg-white/15 rounded-3xl p-8 mb-8">
-            <View className="flex-row items-center mb-5">
-              <Text className="text-white text-2xl mr-3">✓</Text>
-              <Text className="text-white text-lg">Real-time safety alerts</Text>
+          <View className="mb-8 rounded-3xl bg-white/15 p-8">
+            <View className="mb-5 flex-row items-center">
+              <Text className="mr-3 text-2xl text-white">✓</Text>
+              <Text className="text-lg text-white">Real-time safety alerts</Text>
             </View>
-            <View className="flex-row items-center mb-5">
-              <Text className="text-white text-2xl mr-3">✓</Text>
-              <Text className="text-white text-lg">Emergency assistance 24/7</Text>
+            <View className="mb-5 flex-row items-center">
+              <Text className="mr-3 text-2xl text-white">✓</Text>
+              <Text className="text-lg text-white">Emergency assistance 24/7</Text>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-white text-2xl mr-3">✓</Text>
-              <Text className="text-white text-lg">Trusted by millions worldwide</Text>
+              <Text className="mr-3 text-2xl text-white">✓</Text>
+              <Text className="text-lg text-white">Trusted by millions worldwide</Text>
             </View>
           </View>
 
           {/* Buttons */}
           <TouchableOpacity
             onPress={handleSignUp}
-            className="bg-white rounded-2xl py-5 mb-4"
-            activeOpacity={0.8}
-          >
-            <Text className="text-blue-600 text-center text-xl font-bold">
-              Get Started
-            </Text>
+            className="mb-4 rounded-2xl bg-white py-5"
+            activeOpacity={0.8}>
+            <Text className="text-center text-xl font-bold text-blue-600">Get Started</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleLogin}
-            className="bg-transparent border-2 border-white rounded-2xl py-5 mb-6"
-            activeOpacity={0.8}
-          >
-            <Text className="text-white text-center text-xl font-bold">
-              Login
-            </Text>
+            className="mb-6 rounded-2xl border-2 border-white bg-transparent py-5"
+            activeOpacity={0.8}>
+            <Text className="text-center text-xl font-bold text-white">Login</Text>
           </TouchableOpacity>
 
-          <Text className="text-white/80 text-center text-sm">
+          <Text className="text-center text-sm text-white/80">
             By continuing, you agree to our Terms & Privacy Policy
           </Text>
         </View>
       </View>
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default LandingPage
+export default LandingPage;
