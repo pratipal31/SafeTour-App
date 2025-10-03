@@ -7,7 +7,7 @@ const TabIcon = ({ focused, icon, title }: any) => {
   if (focused) {
     return (
       <ImageBackground
-        className="flex flex-row w-full flex-1 min-w-[112px] min-h-16 mt-4 justify-center items-center rounded-full overflow-hidden bg-amber-100"
+        className="flex flex-row w-full flex-1 min-w-[112px] min-h-16 mt-4 justify-center items-center rounded-full overflow-hidden bg-blue-300"
       >
         <Image source={icon} tintColor="#151312" className="size-5" />
         <Text className="text-secondary text-base font-semibold ml-2">
@@ -58,6 +58,16 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="geofencing"
+        options={{
+          title: "Geofencing",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon={icons.arrow} title="Geofence" />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="saved"
         options={{
           title: "Saved",
@@ -87,6 +97,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+
     </Tabs>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import { View, TouchableOpacity, Text, Alert, Platform } from 'react-native'
+import { View, TouchableOpacity, Text, Alert, Platform, Image } from 'react-native'
 import * as WebBrowser from 'expo-web-browser'
 import * as AuthSession from 'expo-auth-session'
 import { useSSO } from '@clerk/clerk-expo'
@@ -61,19 +61,49 @@ export function OAuthButtons() {
   )
 
   return (
-    <View style={{ width: '100%', gap: 12 }}>
+     <View style={{ width: '100%', gap: 12 }}>
+      {/* Google Button */}
       <TouchableOpacity
         onPress={() => handleSSO('oauth_google')}
-        style={{ backgroundColor: '#DB4437', padding: 12, borderRadius: 8 }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#fff',
+          padding: 12,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: '#ccc',
+        }}
       >
-        <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>Sign in with Google</Text>
+        <Image
+          source={require('@/assets/images/google.png')}
+          style={{ width: 20, height: 20, marginRight: 10 }}
+          resizeMode="contain"
+        />
+        <Text style={{ color: '#000', fontWeight: '600', flex: 1, textAlign: 'center' }}>
+          Sign in with Google
+        </Text>
       </TouchableOpacity>
 
+      {/* GitHub Button */}
       <TouchableOpacity
         onPress={() => handleSSO('oauth_github')}
-        style={{ backgroundColor: '#24292E', padding: 12, borderRadius: 8 }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#24292E',
+          padding: 12,
+          borderRadius: 8,
+        }}
       >
-        <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>Sign in with GitHub</Text>
+        <Image
+          source={require('@/assets/images/github.png')}
+          style={{ width: 20, height: 20, marginRight: 10, tintColor: '#fff' }}
+          resizeMode="contain"
+        />
+        <Text style={{ color: '#fff', fontWeight: '600', flex: 1, textAlign: 'center' }}>
+          Sign in with GitHub
+        </Text>
       </TouchableOpacity>
     </View>
   )
