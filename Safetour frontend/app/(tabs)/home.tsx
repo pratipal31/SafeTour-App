@@ -5,7 +5,6 @@ import { SignOutButton } from '@/components/SignOutButton'
 const home = () => {
   return (
     <View>
-      <Text>home</Text>
       <SignOutButton/>
     </View>
   )
