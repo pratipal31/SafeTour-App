@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import React from 'react';
 import { OAuthButtons } from '@/components/OAuthButton';
+import { syncUserToSupabase } from '@/lib/userSync';
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -31,6 +32,19 @@ export default function SignInScreen() {
 
       if (signInAttempt.status === 'complete') {
         await setActive({ session: signInAttempt.createdSessionId });
+
+        // Sync user to Supabase after successful sign in
+        if (signInAttempt.userData) {
+          const clerkUser = {
+            id: signInAttempt.userData.id,
+            emailAddresses: signInAttempt.userData.emailAddresses,
+            firstName: signInAttempt.userData.firstName,
+            lastName: signInAttempt.userData.lastName,
+            imageUrl: signInAttempt.userData.imageUrl,
+          }
+          await syncUserToSupabase(clerkUser)
+        }
+
         router.replace('/(tabs)/home');
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
