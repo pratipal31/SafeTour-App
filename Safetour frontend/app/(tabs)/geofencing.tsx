@@ -23,8 +23,14 @@ const ZONES = [
     radius: 700,
     color: 'orange',
   },
+  {
+    id: 'Andheri',
+    latitude: 19.119,      // approx. latitude for Andheri, Mumbai :contentReference[oaicite:0]{index=0}
+    longitude: 72.847,     // approx. longitude for Andheri, Mumbai :contentReference[oaicite:1]{index=1}
+    radius: 600,
+    color: 'blue',
+  },
 ];
-
 /**
  * Calculate distance in meters between two coordinates
  */

@@ -9,9 +9,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
-import { useSignUp } from '@clerk/clerk-expo'
+import { useSignUp, useUser } from '@clerk/clerk-expo'
 import { Link, useRouter } from 'expo-router'
 import { OAuthButtons } from '@/components/OAuthButton'
+import { syncUserToSupabase } from '@/lib/userSync'
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp()
@@ -46,6 +47,19 @@ export default function SignUpScreen() {
 
       if (signUpAttempt.status === 'complete') {
         await setActive({ session: signUpAttempt.createdSessionId })
+
+        // Sync user to Supabase after successful signup
+        if (signUpAttempt.createdUserId) {
+          const clerkUser = {
+            id: signUpAttempt.createdUserId,
+            emailAddresses: [{ emailAddress }],
+            firstName: null,
+            lastName: null,
+            imageUrl: undefined,
+          }
+          await syncUserToSupabase(clerkUser)
+        }
+
         router.replace('/(tabs)/home')
       } else {
         console.error(JSON.stringify(signUpAttempt, null, 2))
