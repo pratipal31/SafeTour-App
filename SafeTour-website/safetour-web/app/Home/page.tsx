@@ -60,7 +60,7 @@ const Home = () => {
 
             <SignedIn>
               <button
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push("/Main")}
                 className="group inline-flex items-center px-8 py-4 bg-gradient-to-br from-blue-100 to-indigo-100 text-black rounded-lg font-semibold text-lg transition-all space-x-2 hover:shadow-lg"
               >
                 <span>Start Exploring</span>
