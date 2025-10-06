@@ -171,7 +171,7 @@ export default function GeofencingScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <Text style={styles.title}>Geo-Fencing Status</Text>
+      <Text className="pt-4"style={styles.title}>Geo-Fencing Status</Text>
 
       <View style={styles.zoneCircle}>
         <Text style={styles.zoneText}>{currentZone}</Text>

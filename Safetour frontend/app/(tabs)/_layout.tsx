@@ -10,6 +10,7 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: 'Home',
+          headerShown:false,
           tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
         }}
       />
@@ -34,6 +35,7 @@ export default function TabsLayout() {
         name="geofencing"
         options={{
           title: 'Geofencing',
+          headerShown:false,
           tabBarIcon: ({ size, color }) => <Ruler size={size} color={color} />,
         }}
       />
@@ -42,6 +44,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          headerShown:false,
           tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
         }}
       />
