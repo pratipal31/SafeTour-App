@@ -7,74 +7,25 @@ import {
   CheckCircle,
   Lock,
   ArrowRight,
+  Section,
 } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import  Header  from "../../components/Header"
+import Footer from "@/components/Footer";
+import Sections from "@/components/Sections";
 
 const Home = () => {
   const router = useRouter();
 
-  const cards = [
-    {
-      icon: Shield,
-      title: "Blockchain Security",
-      description:
-        "Every transaction and service is verified on the blockchain, ensuring complete transparency and immutable records for your safety.",
-    },
-    {
-      icon: MapPin,
-      title: "Geo-Tagged Verification",
-      description:
-        "Real-time location tracking and verification of all accommodations, guides, and transport services for your peace of mind.",
-    },
-    {
-      icon: CheckCircle,
-      title: "Trusted Network",
-      description:
-        "24/7 emergency support with verified service providers. Access reliable monitoring tools and real-time safety insights.",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
-      <header className="bg-gray-900 shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => router.push("/")}>
-            <img
-              src="/logo.png"
-              alt="SafeTour Logo"
-              className="h-8 w-8 object-contain"
-            />
-            <span className="text-2xl font-bold text-white">SafeTour</span>
-          </div>
+      <Header/>
 
-          {/* Auth Buttons */}
-          <div className="flex items-center space-x-4">
-            <SignedOut>
-              <Link href="/sign-in">
-                <button className="flex items-center space-x-2 px-5 py-2 bg-gradient-to-br from-blue-100 to-indigo-100 text-black rounded-lg font-medium transition-colors hover:shadow-lg">
-                  <Lock className="w-4 h-4" />
-                  <span>Sign In</span>
-                </button>
-              </Link>
-            </SignedOut>
 
-            <SignedIn>
-              <UserButton
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    avatarBox: "w-10 h-10",
-                  },
-                }}
-              />
-            </SignedIn>
-          </div>
-        </div>
-      </header>
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-6 py-16">
@@ -141,94 +92,13 @@ const Home = () => {
           </div>
         </div>
       </section>
+      
 
       {/* Why Choose Us Section */}
-      <section className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Why Choose SafeTour?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Built on blockchain technology to ensure transparency, security,
-              and trust in every journey
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {cards.map((card, idx) => (
-              <div
-                key={idx}
-                className="bg-gradient-to-br from-gray-50 to-white p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300"
-              >
-                <div className="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                  <card.icon className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  {card.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {card.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Sections />
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-3 mb-4">
-                <img
-                  src="/logo.png"
-                  alt="SafeTour Logo"
-                  className="h-8 w-8 object-contain"
-                />
-                <span className="text-xl font-bold">SafeTour</span>
-              </div>
-              <p className="text-gray-400 mb-4">
-                Blockchain-powered platform ensuring end-to-end safety and trust
-                in tourism with verified services and real-time monitoring.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><button className="hover:text-white">About Us</button></li>
-                <li><button className="hover:text-white">Services</button></li>
-                <li><button className="hover:text-white">How It Works</button></li>
-                <li><button className="hover:text-white">Contact</button></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><button className="hover:text-white">Privacy Policy</button></li>
-                <li><button className="hover:text-white">Terms of Service</button></li>
-                <li><button className="hover:text-white">Cookie Policy</button></li>
-                <li><button className="hover:text-white">Support</button></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between">
-            <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2025 SafeTour. All rights reserved.
-            </p>
-            <div className="flex space-x-6">
-              <button className="text-gray-400 hover:text-white">Facebook</button>
-              <button className="text-gray-400 hover:text-white">Twitter</button>
-              <button className="text-gray-400 hover:text-white">LinkedIn</button>
-              <button className="text-gray-400 hover:text-white">Instagram</button>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer/>
     </div>
   );
 };
