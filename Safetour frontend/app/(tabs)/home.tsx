@@ -39,7 +39,7 @@ const Home = () => {
         Alert.alert('No Contact', 'Please set your emergency contact in Profile.');
         return;
       }
-      await axios.post('http://192.168.1.100:5000/sos', {
+      await axios.post('http://172.20.10.8:5000/sos', {
         contact,
         message: 'SOS! I need help.'
       });
