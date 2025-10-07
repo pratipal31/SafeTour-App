@@ -19,6 +19,7 @@ export default function TabsLayout() {
         name="saved"
         options={{
           title: 'Alerts',
+          headerShown: false,
           tabBarIcon: ({ size, color }) => <Shield size={size} color={color} />,
         }}
       />
@@ -27,6 +28,7 @@ export default function TabsLayout() {
         name="search"
         options={{
           title: 'Explore',
+          headerShown: false,
           tabBarIcon: ({ size, color }) => <MapPin size={size} color={color} />,
         }}
       />
