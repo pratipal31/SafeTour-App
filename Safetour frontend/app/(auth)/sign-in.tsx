@@ -9,10 +9,12 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import React from 'react';
 import { OAuthButtons } from '@/components/OAuthButton';
 import { syncUserToSupabase } from '@/lib/userSync';
+import { supabase } from '@/lib/supabase';
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -20,11 +22,14 @@ export default function SignInScreen() {
 
   const [emailAddress, setEmailAddress] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
   const onSignInPress = async () => {
     if (!isLoaded) return;
 
     try {
+      setLoading(true);
+
       const signInAttempt = await signIn.create({
         identifier: emailAddress,
         password,
@@ -33,24 +38,45 @@ export default function SignInScreen() {
       if (signInAttempt.status === 'complete') {
         await setActive({ session: signInAttempt.createdSessionId });
 
-        // Sync user to Supabase after successful sign in
-        if (signInAttempt.userData) {
-          const clerkUser = {
-            id: signInAttempt.userData.id,
-            emailAddresses: signInAttempt.userData.emailAddresses,
-            firstName: signInAttempt.userData.firstName,
-            lastName: signInAttempt.userData.lastName,
-            imageUrl: signInAttempt.userData.imageUrl,
-          }
-          await syncUserToSupabase(clerkUser)
-        }
+        // Get the user ID from the sign-in attempt
+        const userId = signInAttempt.createdUserId;
 
-        router.replace('/(tabs)/home');
+        if (userId) {
+          // Sync user to Supabase (creates user if doesn't exist)
+          await syncUserToSupabase({
+            id: userId,
+            emailAddresses: [{ emailAddress }],
+            firstName: null,
+            lastName: null,
+            imageUrl: undefined,
+          });
+
+          // Check if user has uploaded aadhar
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('aadhar_url')
+            .eq('id', userId)
+            .single();
+
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error checking aadhar status:', error);
+          }
+
+          // Redirect based on aadhar status
+          if (userData?.aadhar_url) {
+            router.replace('/(tabs)/home');
+          } else {
+            router.replace('/onboarding/aadhar-upload');
+          }
+        }
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
+      alert(err?.errors?.[0]?.message || 'Sign in failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,6 +105,7 @@ export default function SignInScreen() {
           placeholder="Enter email"
           onChangeText={setEmailAddress}
           className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
+          editable={!loading}
         />
 
         {/* Password Input */}
@@ -88,14 +115,20 @@ export default function SignInScreen() {
           secureTextEntry
           onChangeText={setPassword}
           className="mb-6 w-full rounded-lg border border-gray-300 px-4 py-3 text-base"
+          editable={!loading}
         />
 
         {/* Email/Password Continue Button */}
         <TouchableOpacity
           onPress={onSignInPress}
           className="mb-4 w-full rounded-lg bg-purple-500 py-3"
+          disabled={loading}
         >
-          <Text className="text-center text-lg font-semibold text-white">Continue</Text>
+          {loading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text className="text-center text-lg font-semibold text-white">Continue</Text>
+          )}
         </TouchableOpacity>
 
         {/* Divider */}
@@ -108,7 +141,7 @@ export default function SignInScreen() {
         <View className="mt-2 flex-row items-center justify-center">
           <Text className="mr-1 text-gray-600">Don't have an account?</Text>
           <Link href="/sign-up" asChild>
-            <TouchableOpacity>
+            <TouchableOpacity disabled={loading}>
               <Text className="font-semibold text-purple-600">Sign up</Text>
             </TouchableOpacity>
           </Link>
