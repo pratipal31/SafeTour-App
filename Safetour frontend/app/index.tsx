@@ -19,7 +19,7 @@ export default function Index() {
   if (isSignedIn) {
     return <Redirect href="/(tabs)/home" />
   }
-
+    
   // If user is not signed in, show landing page
   return <LandingPage />;
 }

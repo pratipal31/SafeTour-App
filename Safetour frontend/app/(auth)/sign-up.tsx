@@ -8,8 +8,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native'
-import { useSignUp, useUser } from '@clerk/clerk-expo'
+import { useSignUp } from '@clerk/clerk-expo'
 import { Link, useRouter } from 'expo-router'
 import { OAuthButtons } from '@/components/OAuthButton'
 import { syncUserToSupabase } from '@/lib/userSync'
@@ -22,11 +23,14 @@ export default function SignUpScreen() {
   const [password, setPassword] = React.useState('')
   const [pendingVerification, setPendingVerification] = React.useState(false)
   const [code, setCode] = React.useState('')
+  const [loading, setLoading] = React.useState(false)
 
   const onSignUpPress = async () => {
     if (!isLoaded) return
 
     try {
+      setLoading(true)
+
       await signUp.create({
         emailAddress,
         password,
@@ -34,8 +38,11 @@ export default function SignUpScreen() {
 
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
       setPendingVerification(true)
-    } catch (err) {
+    } catch (err: any) {
       console.error(JSON.stringify(err, null, 2))
+      alert(err?.errors?.[0]?.message || 'Sign up failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -43,29 +50,35 @@ export default function SignUpScreen() {
     if (!isLoaded) return
 
     try {
+      setLoading(true)
+
       const signUpAttempt = await signUp.attemptEmailAddressVerification({ code })
 
       if (signUpAttempt.status === 'complete') {
         await setActive({ session: signUpAttempt.createdSessionId })
 
-        // Sync user to Supabase after successful signup
+        // Sync user to Supabase after successful signup (creates new user record)
         if (signUpAttempt.createdUserId) {
-          const clerkUser = {
+          await syncUserToSupabase({
             id: signUpAttempt.createdUserId,
             emailAddresses: [{ emailAddress }],
             firstName: null,
             lastName: null,
             imageUrl: undefined,
-          }
-          await syncUserToSupabase(clerkUser)
+          })
         }
 
-        router.replace('/(tabs)/home')
+        // Always redirect to aadhar upload for new users
+        router.replace('/onboarding/aadhar-upload')
       } else {
         console.error(JSON.stringify(signUpAttempt, null, 2))
+        alert('Verification failed. Please try again.')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(JSON.stringify(err, null, 2))
+      alert(err?.errors?.[0]?.message || 'Verification failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -85,12 +98,19 @@ export default function SignUpScreen() {
             placeholder="Enter your verification code"
             onChangeText={(code) => setCode(code)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base"
+            editable={!loading}
+            keyboardType="number-pad"
           />
           <TouchableOpacity
             onPress={onVerifyPress}
             className="w-full bg-purple-500 py-3 rounded-lg"
+            disabled={loading}
           >
-            <Text className="text-center text-white font-semibold text-lg">Verify</Text>
+            {loading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text className="text-center text-white font-semibold text-lg">Verify</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -121,6 +141,8 @@ export default function SignUpScreen() {
           placeholder="Enter email"
           onChangeText={(email) => setEmailAddress(email)}
           className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base"
+          editable={!loading}
+          keyboardType="email-address"
         />
 
         <TextInput
@@ -129,13 +151,19 @@ export default function SignUpScreen() {
           secureTextEntry={true}
           onChangeText={(password) => setPassword(password)}
           className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base"
+          editable={!loading}
         />
 
         <TouchableOpacity
           onPress={onSignUpPress}
           className="w-full bg-purple-500 py-3 rounded-lg mb-4"
+          disabled={loading}
         >
-          <Text className="text-center text-white font-semibold text-lg">Continue</Text>
+          {loading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text className="text-center text-white font-semibold text-lg">Continue</Text>
+          )}
         </TouchableOpacity>
 
         <Text className="text-gray-500 my-2 text-center">or</Text>
@@ -146,7 +174,7 @@ export default function SignUpScreen() {
         <View className="mt-2 flex-row items-center justify-center">
           <Text className="text-gray-600 mr-1">Already have an account?</Text>
           <Link href="/sign-in" asChild>
-            <TouchableOpacity>
+            <TouchableOpacity disabled={loading}>
               <Text className="text-purple-600 font-semibold">Sign in</Text>
             </TouchableOpacity>
           </Link>
