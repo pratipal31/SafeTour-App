@@ -3,7 +3,6 @@
     "name": "SafeTour",
     "slug": "Safe_Tour",
     "version": "1.0.0",
-
     "scheme": "movie_app",
     "platforms": ["ios", "android"],
     "web": {
@@ -11,18 +10,22 @@
       "output": "static",
       "favicon": "./assets/images/logo.png"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow SafeTour to use your location to show danger zones nearby."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true,
-
       "tsconfigPaths": true
     },
-
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
-
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/images/logo.png",
       "resizeMode": "contain",
@@ -30,12 +33,30 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.safetour.app",
+      "config": {
+        "googleMapsApiKey": "YOUR_IOS_GOOGLE_MAPS_API_KEY"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs your location to show danger zones nearby.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs your location to show danger zones nearby."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.safetour.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBPW2GBnLWfiwC_ErZoTOpPvFkYZRjQTHA"
+        }
       }
     }
   }

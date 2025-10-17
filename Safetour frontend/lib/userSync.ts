@@ -26,20 +26,60 @@ export async function syncUserToSupabase(clerkUser: ClerkUser) {
       updated_at: new Date().toISOString(),
     };
 
-    // Upsert the user to Supabase
-    const { data, error } = await supabase
+    // First, check if user already exists by email
+    const { data: existingUser, error: selectError } = await supabase
       .from('users')
-      .upsert(userData, { onConflict: ['id'] })
-      .select()
-      .maybeSingle(); // Ensures we get a single object if exists
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (error) {
-      console.error('Error syncing user to Supabase:', error);
-      return { success: false, error };
+    if (selectError && selectError.code !== 'PGRST116') {
+      // PGRST116 means no rows found, which is fine
+      console.error('Error checking existing user:', selectError);
+      return { success: false, error: selectError };
     }
 
-    console.log('User synced to Supabase successfully:', data);
-    return { success: true, data };
+    let result;
+
+    if (existingUser) {
+      // User exists, update the record
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          image_url: userData.image_url,
+          updated_at: userData.updated_at,
+        })
+        .eq('email', email)
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error updating user in Supabase:', error);
+        return { success: false, error };
+      }
+
+      console.log('User updated in Supabase successfully:', data);
+      result = { success: true, data, action: 'updated' };
+    } else {
+      // User doesn't exist, insert new record
+      const { data, error } = await supabase
+        .from('users')
+        .insert([userData])
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error inserting user to Supabase:', error);
+        return { success: false, error };
+      }
+
+      console.log('User inserted to Supabase successfully:', data);
+      result = { success: true, data, action: 'inserted' };
+    }
+
+    return result;
   } catch (error) {
     console.error('Unexpected error syncing user:', error);
     return { success: false, error };
