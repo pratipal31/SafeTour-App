@@ -3,7 +3,7 @@ import { View, Text, Alert, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { Marker, Circle } from 'react-native-maps';
 
-const API_URL = 'http://192.168.1.12:5000/danger-zones'; // CHANGE IP TO YOUR COMPUTER IP
+const API_URL = 'http://192.168.1.106:5000/danger-zones'; // CHANGE IP TO YOUR COMPUTER IP
 
 interface Coordinates {
   latitude: number;

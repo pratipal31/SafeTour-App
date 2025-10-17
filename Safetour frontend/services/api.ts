@@ -1,5 +1,5 @@
 // API service for SafeTour backend
-const BASE_URL = 'http://172.25.107.230:5000'; // Change this to your backend URL
+const BASE_URL = 'http://192.168.1.106:5001'; // Change this to your backend URL
 
 export interface User {
   id: string;
@@ -23,6 +23,8 @@ export interface SOSRequest {
   message?: string;
   userName: string;
   location: string;
+  latitude?: number;
+  longitude?: number;
   action: 'call' | 'sms' | 'both';
 }
 
