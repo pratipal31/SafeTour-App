@@ -26,7 +26,6 @@ export async function syncUserToSupabase(clerkUser: ClerkUser) {
       updated_at: new Date().toISOString(),
     };
 
-<<<<<<< HEAD
     // First, check if user already exists by email
     const { data: existingUser, error: selectError } = await supabase
       .from('users')
@@ -81,28 +80,8 @@ export async function syncUserToSupabase(clerkUser: ClerkUser) {
     }
 
     return result;
-=======
-    // Upsert the user to Supabase
-    const { data, error } = await supabase
-      .from('users')
-      .upsert(userData, { onConflict: ['id'] })
-      .select()
-      .maybeSingle(); // Ensures we get a single object if exists
-
-    if (error) {
-      console.error('Error syncing user to Supabase:', error);
-      return { success: false, error };
-    }
-
-    console.log('User synced to Supabase successfully:', data);
-    return { success: true, data };
->>>>>>> a7b3ab15f27386648bee156e40f00039e5559633
   } catch (error) {
     console.error('Unexpected error syncing user:', error);
     return { success: false, error };
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a7b3ab15f27386648bee156e40f00039e5559633
