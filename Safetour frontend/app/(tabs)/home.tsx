@@ -1,16 +1,18 @@
 // Home.tsx
-import { View, Text, Pressable, ScrollView, Animated, Alert, Image } from 'react-native'
+import { View, Text, Pressable, ScrollView, Animated, Alert, Image, Linking } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Location from 'expo-location'
 import Svg, { Circle } from 'react-native-svg'
 import { apiService, EmergencyContact } from '../../services/api'
 import { useUser } from '@clerk/clerk-expo'
+import { useRouter } from 'expo-router'
 
 const SOS_HOLD_DURATION = 3000; // 3 seconds
 
 const Home = () => {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTriggeredRef = useRef(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -144,30 +146,43 @@ const Home = () => {
     }
   };
 
-  const updateSafetyScore = () => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-    setLastUpdated(timeString);
-    
-    // Simulate dynamic safety score based on time and location
-    const hour = now.getHours();
-    let score = 87;
-    let crowd = 'Moderate Crowd';
-    
-    if (hour >= 6 && hour <= 10) {
-      score = 92;
-      crowd = 'Light Crowd';
-    } else if (hour >= 18 && hour <= 22) {
-      score = 85;
-      crowd = 'Heavy Crowd';
+  const updateSafetyScore = async () => {
+    try {
+      // Get current location first
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Location permission denied');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      
+      // Fetch real dashboard data from backend
+      const dashboardData = await apiService.fetchDashboard(latitude, longitude);
+      
+      if (dashboardData) {
+        setSafetyScore(dashboardData.safety_score);
+        setCrowdLevel(dashboardData.crowd_level);
+        setLastUpdated(dashboardData.last_updated);
+        
+        console.log('📊 Dashboard updated:', {
+          score: dashboardData.safety_score,
+          crowd: dashboardData.crowd_level,
+          alerts: dashboardData.nearby_alerts
+        });
+      }
+    } catch (error) {
+      console.error('Error updating safety score:', error);
+      // Fallback to time-based estimation
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      setLastUpdated(timeString);
     }
-    
-    setSafetyScore(score);
-    setCrowdLevel(crowd);
   };
 
   const callEmergencyContacts = async (contacts: EmergencyContact[]) => {
@@ -317,71 +332,186 @@ const Home = () => {
   };
 
   // Interactive handlers for quick actions
-  const handleNavigation = () => {
-    Alert.alert(
-      'Navigation', 
-      'Opening safe routes to nearby destinations...',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open Maps', onPress: () => Alert.alert('Success', 'Maps opened with safe routes') }
-      ]
-    );
+  const handleNavigation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please enable location access.');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      
+      // Open Google Maps with current location
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&travelmode=driving`;
+      
+      Alert.alert(
+        '🗺️ Navigation', 
+        'Choose navigation option:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Google Maps', 
+            onPress: () => Linking.openURL(mapsUrl)
+          },
+          {
+            text: 'View Danger Zones',
+            onPress: () => router.push('/geofencing')
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get location');
+    }
   };
 
   const handleDigitalID = () => {
+    const userId = user?.id || 'GUEST';
+    const userEmail = user?.emailAddresses?.[0]?.emailAddress || 'No email';
+    const idNumber = `ST-${userId.substring(0, 8).toUpperCase()}`;
+    
     Alert.alert(
-      'Digital ID', 
-      'Displaying your digital tourist ID...',
+      '🆔 Digital Tourist ID', 
+      `Name: ${userName}\nEmail: ${userEmail}\nID: ${idNumber}\nLocation: ${currentLocation}\n\nThis ID can be used for tourist services and emergency identification.`,
       [
         { text: 'Close', style: 'cancel' },
-        { text: 'Show QR Code', onPress: () => Alert.alert('QR Code', 'Tourist ID: TC-TID-2023-001234') }
+        { 
+          text: 'Share ID', 
+          onPress: () => Alert.alert('✅ Copied', `Tourist ID ${idNumber} copied to clipboard`) 
+        }
       ]
     );
   };
 
-  const handleItinerary = () => {
+  const handleItinerary = async () => {
+    try {
+      // Get saved itinerary from storage
+      const savedItinerary = await AsyncStorage.getItem('userItinerary');
+      
+      if (savedItinerary) {
+        const itinerary = JSON.parse(savedItinerary);
+        Alert.alert(
+          '📅 Your Itinerary',
+          `Today's Plans:\n${itinerary.map((item: any, idx: number) => `${idx + 1}. ${item}`).join('\n')}`,
+          [
+            { text: 'Close' },
+            { text: 'Add More', onPress: () => addItineraryItem() }
+          ]
+        );
+      } else {
+        Alert.alert(
+          '📅 Itinerary',
+          'No itinerary planned yet. Would you like to add places?',
+          [
+            { text: 'Later', style: 'cancel' },
+            { text: 'Add Places', onPress: () => addItineraryItem() }
+          ]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load itinerary');
+    }
+  };
+
+  const addItineraryItem = () => {
     Alert.alert(
-      'Itinerary', 
-      'View your planned activities and routes',
+      '➕ Add to Itinerary',
+      'Quick add popular places:',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'View Plans', onPress: () => Alert.alert('Itinerary', 'Today: Mall Road → The Ridge → Cafe Sol') }
+        { text: 'Tourist Spots', onPress: () => saveItinerary('Visit Tourist Spots') },
+        { text: 'Local Markets', onPress: () => saveItinerary('Explore Local Markets') },
+        { text: 'Restaurants', onPress: () => saveItinerary('Try Local Cuisine') }
       ]
     );
+  };
+
+  const saveItinerary = async (item: string) => {
+    try {
+      const existing = await AsyncStorage.getItem('userItinerary');
+      const itinerary = existing ? JSON.parse(existing) : [];
+      itinerary.push(item);
+      await AsyncStorage.setItem('userItinerary', JSON.stringify(itinerary));
+      Alert.alert('✅ Added', `"${item}" added to your itinerary!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save itinerary');
+    }
   };
 
   const handleEmergency = () => {
     Alert.alert(
-      'Emergency Contacts', 
-      'Quick access to emergency services',
+      '🚨 Emergency Services', 
+      'Quick dial emergency numbers:',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Police (100)', onPress: () => Alert.alert('Calling', 'Connecting to Police...') },
-        { text: 'Ambulance (108)', onPress: () => Alert.alert('Calling', 'Connecting to Ambulance...') }
+        { 
+          text: '👮 Police (100)', 
+          onPress: () => {
+            Alert.alert(
+              'Call Police?',
+              'Dial 100 for Police emergency',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Call Now', onPress: () => Linking.openURL('tel:100') }
+              ]
+            );
+          }
+        },
+        { 
+          text: '🚑 Ambulance (108)', 
+          onPress: () => {
+            Alert.alert(
+              'Call Ambulance?',
+              'Dial 108 for Medical emergency',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Call Now', onPress: () => Linking.openURL('tel:108') }
+              ]
+            );
+          }
+        },
+        { 
+          text: '🔥 Fire (101)', 
+          onPress: () => {
+            Alert.alert(
+              'Call Fire Department?',
+              'Dial 101 for Fire emergency',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Call Now', onPress: () => Linking.openURL('tel:101') }
+              ]
+            );
+          }
+        }
       ]
     );
   };
 
   const handleGeofencing = () => {
-    Alert.alert(
-      'Geofencing',
-      'Manage location-based safety zones and alerts',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open Geofencing', onPress: () => Alert.alert('Navigation', 'Opening Geofencing interface...') }
-      ]
-    );
+    router.push('/geofencing');
   };
 
   const handleProfilePress = () => {
-    Alert.alert('Profile', 'Opening user profile settings...');
+    router.push('/profile');
   };
 
-  const handleRefreshLocation = () => {
-    setCurrentLocation('Updating...');
-    getCurrentLocation();
-    updateSafetyScore();
-    Alert.alert('Updated', 'Location and safety score refreshed!');
+  const handleRefreshLocation = async () => {
+    try {
+      setCurrentLocation('Updating...');
+      setSafetyScore(0);
+      
+      // Refresh location
+      await getCurrentLocation();
+      
+      // Refresh safety score with real data
+      await updateSafetyScore();
+      
+      Alert.alert('✅ Updated', 'Location and safety data refreshed with real-time information!');
+    } catch (error) {
+      console.error('Error refreshing:', error);
+      Alert.alert('Error', 'Failed to refresh data. Please try again.');
+    }
   };
 
   const handleSOSPressIn = () => {

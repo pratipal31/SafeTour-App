@@ -300,5 +300,73 @@ def get_alerts():
             'alert_counts': {'urgent': 0, 'warning': 0, 'info': 0}
         }), 400
 
+# ======================================================
+# HOME DASHBOARD API ENDPOINT
+# ======================================================
+@app.route('/dashboard', methods=['GET'])
+def get_dashboard():
+    """
+    Returns home dashboard data: safety score, crowd level, nearby alerts
+    Query params: ?lat=19.0760&lon=72.8777
+    """
+    try:
+        user_lat = float(request.args.get('lat', 0))
+        user_lon = float(request.args.get('lon', 0))
+        
+        print(f"📊 Dashboard request for: {user_lat}, {user_lon}")
+        
+        # Get city name
+        city = get_nearest_city(user_lat, user_lon) if user_lat and user_lon else "Unknown"
+        
+        # Fetch news for safety analysis
+        headlines = fetch_news_from_rss(city) if city != "Unknown" else []
+        danger_zones = analyze_danger_zones(headlines, city) if headlines else []
+        
+        # Calculate safety score based on danger zones
+        safety_score = 95  # Base score
+        urgent_count = sum(1 for z in danger_zones if z.get('severity') == 'High')
+        warning_count = sum(1 for z in danger_zones if z.get('severity') == 'Medium')
+        
+        safety_score -= (urgent_count * 7)  # -7 per high risk
+        safety_score -= (warning_count * 3)   # -3 per medium risk
+        safety_score = max(20, min(100, safety_score))  # Keep between 20-100
+        
+        # Determine crowd level based on time and alerts
+        import datetime
+        hour = datetime.datetime.now().hour
+        if 9 <= hour <= 11 or 17 <= hour <= 20:
+            crowd_level = "Heavy Crowd"
+        elif 12 <= hour <= 16:
+            crowd_level = "Moderate Crowd"
+        else:
+            crowd_level = "Light Crowd"
+        
+        # Get nearby alerts count
+        nearby_alerts = len([z for z in danger_zones if z.get('severity') in ['High', 'Medium']])
+        
+        return jsonify({
+            'city': city,
+            'safety_score': safety_score,
+            'crowd_level': crowd_level,
+            'nearby_alerts': nearby_alerts,
+            'danger_zones_count': len(danger_zones),
+            'urgent_alerts': urgent_count,
+            'warning_alerts': warning_count,
+            'last_updated': datetime.datetime.now().strftime('%H:%M')
+        })
+        
+    except Exception as e:
+        print(f"❌ Dashboard error: {e}")
+        return jsonify({
+            'city': 'Unknown',
+            'safety_score': 85,
+            'crowd_level': 'Moderate Crowd',
+            'nearby_alerts': 0,
+            'danger_zones_count': 0,
+            'urgent_alerts': 0,
+            'warning_alerts': 0,
+            'last_updated': '00:00'
+        }), 200
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

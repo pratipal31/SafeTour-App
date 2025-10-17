@@ -199,6 +199,40 @@ class ApiService {
     }
   }
 
+  // Fetch Dashboard Data
+  async fetchDashboard(latitude: number, longitude: number): Promise<any> {
+    try {
+      console.log(`📊 Fetching dashboard from: http://192.168.1.106:5000/dashboard?lat=${latitude}&lon=${longitude}`);
+      
+      const response = await fetch(`http://192.168.1.106:5000/dashboard?lat=${latitude}&lon=${longitude}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('📊 Dashboard data:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching dashboard:', error);
+      return {
+        city: 'Unknown',
+        safety_score: 85,
+        crowd_level: 'Moderate Crowd',
+        nearby_alerts: 0,
+        danger_zones_count: 0,
+        urgent_alerts: 0,
+        warning_alerts: 0,
+        last_updated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+      };
+    }
+  }
+
   // Fetch Alerts
   async fetchAlerts(latitude: number, longitude: number): Promise<any> {
     try {

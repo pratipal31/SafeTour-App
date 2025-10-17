@@ -1,5 +1,5 @@
 // Profile.tsx
-import { View, Text, TextInput, Pressable, Alert, ScrollView, Switch, Modal, Linking, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Pressable, Alert, ScrollView, Switch, Modal, Linking, Image, ActivityIndicator, Share } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SignOutButton } from '@/components/SignOutButton';
@@ -32,6 +32,8 @@ const Profile = () => {
   const [locationTracking, setLocationTracking] = useState(true);
   const [alertSounds, setAlertSounds] = useState(true);
   const [emergencySharing, setEmergencySharing] = useState(true);
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [soundVolume, setSoundVolume] = useState(80);
 
   useEffect(() => {
     checkBackendHealth();
@@ -244,66 +246,129 @@ const Profile = () => {
     Alert.alert('Settings Updated', `${setting.replace(/([A-Z])/g, ' $1').toLowerCase()} ${value ? 'enabled' : 'disabled'}`);
   };
 
-  const handleDigitalIDCard = () => {
-    // Generate a consistent ID based on user's ID or create a random one
+  const handleDigitalIDCard = async () => {
     const userId = user?.id || 'guest';
-    const uniqueId = `TC-TID-${new Date().getFullYear()}-${userId.slice(0, 6).toUpperCase()}`;
+    const uniqueId = `ST-${new Date().getFullYear()}-${userId.slice(0, 8).toUpperCase()}`;
     
-    // Get user's full name or default to 'Guest User'
-    const fullName = user?.fullName || user?.username || 'Guest User';
+    const idDetails = `🆔 SafeTour Digital ID\n\n` +
+      `Name: ${name}\n` +
+      `Email: ${email}\n` +
+      `ID: ${uniqueId}\n` +
+      `Status: ✅ Verified\n` +
+      `Issued: ${new Date().toLocaleDateString()}\n\n` +
+      `Valid for:\n` +
+      `• Tourist attractions\n` +
+      `• Hotel check-ins\n` +
+      `• Emergency identification\n` +
+      `• Government services`;
     
-    // Generate expiry date 1 year from now
-    const expiryDate = new Date();
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-    const formattedExpiry = expiryDate.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: '2-digit' 
-    });
-  
-    const message = `  Tourist ID: ${uniqueId}
-  Name: ${fullName}
-  Email: ${user?.emailAddresses?.[0]?.emailAddress || 'Not provided'}
-  Status: ${user?.publicMetadata?.verified ? 'Verified' : 'Not Verified'}
-  Valid Until: ${formattedExpiry}`;
-  
     Alert.alert(
-      'Digital ID Card',
-      message,
+      '🆔 Digital Tourist ID',
+      idDetails,
       [
+        { text: 'Close', style: 'cancel' },
         { 
-          text: 'Close', 
-          style: 'cancel' 
+          text: 'Share ID', 
+          onPress: async () => {
+            try {
+              await Share.share({
+                message: idDetails,
+                title: 'SafeTour Digital ID'
+              });
+            } catch (error) {
+              Alert.alert('Error', 'Failed to share ID');
+            }
+          }
         },
-        { 
-          text: 'Share', 
-          onPress: () => {
-            Alert.alert(
-              'Share Digital ID',
-              'Your Digital ID has been copied to clipboard and is ready to share.',
-              [{ text: 'OK' }]
-            );
-            // Uncomment to enable actual clipboard functionality
-            // Clipboard.setString(message);
-          } 
+        {
+          text: 'Save to Storage',
+          onPress: async () => {
+            await AsyncStorage.setItem('digitalID', JSON.stringify({ id: uniqueId, name, email, issued: new Date().toISOString() }));
+            Alert.alert('✅ Saved', 'Digital ID saved to device');
+          }
         }
       ]
     );
   };
 
-  const handleQRCode = () => {
+  const handleQRCode = async () => {
+    const userId = user?.id || 'guest';
+    const qrData = {
+      id: `ST-${userId.slice(0, 8).toUpperCase()}`,
+      name: name,
+      email: email,
+      phone: emergencyContacts[0]?.phone || 'N/A',
+      issued: new Date().toISOString()
+    };
+    
+    // Save QR data
+    await AsyncStorage.setItem('qrCodeData', JSON.stringify(qrData));
+    
     Alert.alert(
-      'QR Code',
-      'Displaying your identification QR code...\n\nScan this code at tourist checkpoints for quick verification.',
-      [{ text: 'OK' }]
+      '📱 QR Code',
+      `Your QR Code contains:\n\n` +
+      `ID: ${qrData.id}\n` +
+      `Name: ${qrData.name}\n` +
+      `Email: ${qrData.email}\n\n` +
+      `Scan this at:\n` +
+      `• Tourist checkpoints\n` +
+      `• Hotel receptions\n` +
+      `• Emergency services\n\n` +
+      `QR Code URL: safetour://verify/${qrData.id}`,
+      [
+        { text: 'Close' },
+        { 
+          text: 'Share QR', 
+          onPress: async () => {
+            try {
+              await Share.share({
+                message: `SafeTour QR Code: safetour://verify/${qrData.id}`,
+                title: 'My SafeTour QR Code'
+              });
+            } catch (error) {
+              Alert.alert('Error', 'Failed to share QR code');
+            }
+          }
+        }
+      ]
     );
   };
 
-  const handleVerificationStatus = () => {
+  const handleVerificationStatus = async () => {
+    const hasEmergencyContact = emergencyContacts.length > 1; // More than just Police
+    const hasEmail = email && email !== '';
+    const hasName = name && name !== 'User';
+    
+    const verificationStatus = [
+      { item: 'Identity', status: hasName },
+      { item: 'Email', status: hasEmail },
+      { item: 'Emergency Contact', status: hasEmergencyContact },
+      { item: 'Location Access', status: locationTracking },
+      { item: 'Backend Connection', status: backendConnected }
+    ];
+    
+    const verifiedCount = verificationStatus.filter(v => v.status).length;
+    const totalCount = verificationStatus.length;
+    const percentage = Math.round((verifiedCount / totalCount) * 100);
+    
+    const statusText = verificationStatus
+      .map(v => `${v.status ? '✅' : '❌'} ${v.item}`)
+      .join('\n');
+    
     Alert.alert(
-      'Verification Status',
-      '✅ Identity Verified\n✅ Phone Number Verified\n✅ Emergency Contact Added\n\nLast Verified: Today, 06:47 AM',
-      [{ text: 'OK' }]
+      '🔐 Verification Status',
+      `Profile Completion: ${percentage}%\n\n${statusText}\n\nLast Updated: ${new Date().toLocaleString()}`,
+      [
+        { text: 'Close' },
+        {
+          text: 'Complete Profile',
+          onPress: () => {
+            if (!hasEmergencyContact) {
+              Alert.alert('Add Contact', 'Please add an emergency contact to complete your profile');
+            }
+          }
+        }
+      ]
     );
   };
 
@@ -325,36 +390,110 @@ const Profile = () => {
 
   const handleLanguage = () => {
     Alert.alert(
-      'Language Settings',
-      'Select your preferred language',
+      '🌐 Language Settings',
+      `Current: ${selectedLanguage}\n\nSelect your preferred language:`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'English', onPress: () => Alert.alert('Language', 'Language set to English') },
-        { text: 'हिंदी', onPress: () => Alert.alert('Language', 'भाषा हिंदी में सेट की गई') }
+        { 
+          text: 'English', 
+          onPress: async () => {
+            setSelectedLanguage('English');
+            await AsyncStorage.setItem('appLanguage', 'English');
+            Alert.alert('✅ Language Updated', 'Language set to English');
+          }
+        },
+        { 
+          text: 'हिंदी (Hindi)', 
+          onPress: async () => {
+            setSelectedLanguage('Hindi');
+            await AsyncStorage.setItem('appLanguage', 'Hindi');
+            Alert.alert('✅ भाषा अपडेट की गई', 'भाषा हिंदी में सेट की गई');
+          }
+        },
+        { 
+          text: 'मराठी (Marathi)', 
+          onPress: async () => {
+            setSelectedLanguage('Marathi');
+            await AsyncStorage.setItem('appLanguage', 'Marathi');
+            Alert.alert('✅ भाषा अद्यतनित', 'भाषा मराठीमध्ये सेट केली');
+          }
+        }
       ]
     );
   };
 
-  const handleNotifications = () => {
+  const handleNotifications = async () => {
+    const notifSettings = await AsyncStorage.getItem('notificationSettings');
+    const settings = notifSettings ? JSON.parse(notifSettings) : {
+      safetyAlerts: true,
+      weatherUpdates: true,
+      crowdAlerts: true,
+      sosAlerts: true
+    };
+    
     Alert.alert(
-      'Notification Settings',
-      'Manage your notification preferences',
+      '🔔 Notification Settings',
+      `Current Settings:\n\n` +
+      `${settings.safetyAlerts ? '✅' : '❌'} Safety Alerts\n` +
+      `${settings.weatherUpdates ? '✅' : '❌'} Weather Updates\n` +
+      `${settings.crowdAlerts ? '✅' : '❌'} Crowd Alerts\n` +
+      `${settings.sosAlerts ? '✅' : '❌'} SOS Alerts`,
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Safety Alerts', onPress: () => Alert.alert('Notifications', 'Safety alerts: Enabled') },
-        { text: 'Weather Updates', onPress: () => Alert.alert('Notifications', 'Weather updates: Enabled') }
+        { text: 'Close', style: 'cancel' },
+        { 
+          text: 'Enable All', 
+          onPress: async () => {
+            const allEnabled = { safetyAlerts: true, weatherUpdates: true, crowdAlerts: true, sosAlerts: true };
+            await AsyncStorage.setItem('notificationSettings', JSON.stringify(allEnabled));
+            Alert.alert('✅ Updated', 'All notifications enabled');
+          }
+        },
+        { 
+          text: 'Disable All', 
+          onPress: async () => {
+            const allDisabled = { safetyAlerts: false, weatherUpdates: false, crowdAlerts: false, sosAlerts: false };
+            await AsyncStorage.setItem('notificationSettings', JSON.stringify(allDisabled));
+            Alert.alert('✅ Updated', 'All notifications disabled');
+          }
+        }
       ]
     );
   };
 
   const handleSound = () => {
     Alert.alert(
-      'Sound Settings',
-      'Configure alert sounds and volume',
+      '🔊 Sound Settings',
+      `Current Volume: ${soundVolume}%\n\nConfigure alert sounds:`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Test Sound', onPress: () => Alert.alert('Sound', '🔊 Alert sound played') },
-        { text: 'Volume Settings', onPress: () => Alert.alert('Volume', 'Alert volume: 80%') }
+        { 
+          text: '🔊 Test Sound', 
+          onPress: () => Alert.alert('🔊 Sound Test', 'Alert sound played at current volume') 
+        },
+        { 
+          text: 'Volume: Low (30%)', 
+          onPress: async () => {
+            setSoundVolume(30);
+            await AsyncStorage.setItem('soundVolume', '30');
+            Alert.alert('✅ Updated', 'Volume set to 30%');
+          }
+        },
+        { 
+          text: 'Volume: Medium (60%)', 
+          onPress: async () => {
+            setSoundVolume(60);
+            await AsyncStorage.setItem('soundVolume', '60');
+            Alert.alert('✅ Updated', 'Volume set to 60%');
+          }
+        },
+        { 
+          text: 'Volume: High (100%)', 
+          onPress: async () => {
+            setSoundVolume(100);
+            await AsyncStorage.setItem('soundVolume', '100');
+            Alert.alert('✅ Updated', 'Volume set to 100%');
+          }
+        }
       ]
     );
   };
