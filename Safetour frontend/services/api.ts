@@ -198,6 +198,52 @@ class ApiService {
       return false;
     }
   }
+
+  // Fetch Alerts
+  async fetchAlerts(latitude: number, longitude: number): Promise<any> {
+    try {
+      console.log(`🌐 Fetching alerts from: http://192.168.1.106:5000/alerts?lat=${latitude}&lon=${longitude}`);
+      
+      const response = await fetch(`http://192.168.1.106:5000/alerts?lat=${latitude}&lon=${longitude}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log(`📡 Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('📦 Received data:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching alerts:', error);
+      
+      // Return sample data as fallback for testing
+      return {
+        city: 'Sample City',
+        alerts: [
+          {
+            id: 1,
+            type: 'warning',
+            title: 'Backend Connection Issue',
+            location: 'Your Location',
+            time: 'Just now',
+            message: 'Unable to connect to backend server. Please ensure Python backend is running on http://192.168.1.106:5000',
+            severity: 'Medium',
+            risk_type: 'System',
+            dismissed: false
+          }
+        ],
+        alert_counts: { urgent: 0, warning: 1, info: 0 },
+        total_alerts: 1
+      };
+    }
+  }
 }
 
 export const apiService = new ApiService();

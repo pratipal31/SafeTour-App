@@ -212,5 +212,93 @@ def get_danger_zones():
             "danger_zones": []
         }), 400
 
+# ======================================================
+# ALERTS API ENDPOINT
+# ======================================================
+@app.route('/alerts', methods=['GET'])
+def get_alerts():
+    """
+    Returns safety alerts based on user location
+    Query params: ?lat=19.0760&lon=72.8777
+    """
+    try:
+        # Get coordinates from query params
+        user_lat = float(request.args.get('lat', 0))
+        user_lon = float(request.args.get('lon', 0))
+        
+        print(f"📍 Fetching alerts for coordinates: {user_lat}, {user_lon}")
+        
+        # Get city name
+        city = get_nearest_city(user_lat, user_lon) if user_lat and user_lon else "Unknown"
+        
+        # Fetch news headlines
+        headlines = fetch_news_from_rss(city) if city != "Unknown" else []
+        
+        # Analyze and create alerts from headlines
+        alerts_list = []
+        
+        if headlines:
+            # Analyze danger zones to get structured data
+            danger_zones = analyze_danger_zones(headlines, city)
+            
+            # Geocode the zones to get coordinates
+            geocoded_zones = geocode_danger_zones(danger_zones)
+            
+            # Convert danger zones to alerts with coordinates
+            for idx, zone in enumerate(geocoded_zones):
+                alert_type = 'urgent' if zone.get('severity') == 'High' else 'warning' if zone.get('severity') == 'Medium' else 'info'
+                
+                alerts_list.append({
+                    'id': idx + 1,
+                    'type': alert_type,
+                    'title': f"{zone.get('risk_type', 'Safety Alert')} - {zone.get('severity', 'Medium')} Risk",
+                    'location': zone.get('location', city),
+                    'latitude': zone.get('latitude'),
+                    'longitude': zone.get('longitude'),
+                    'time': 'Just now',
+                    'message': zone.get('description', 'Stay alert in this area.'),
+                    'severity': zone.get('severity', 'Medium'),
+                    'risk_type': zone.get('risk_type', 'General'),
+                    'dismissed': False
+                })
+        
+        # Add default alerts if no news found
+        if not alerts_list:
+            alerts_list = [
+                {
+                    'id': 1,
+                    'type': 'info',
+                    'title': 'All Clear',
+                    'location': city,
+                    'time': 'Just now',
+                    'message': f'No immediate safety concerns detected in {city}. Stay vigilant and enjoy your visit!',
+                    'severity': 'Low',
+                    'risk_type': 'General',
+                    'dismissed': False
+                }
+            ]
+        
+        # Count alerts by type
+        alert_counts = {
+            'urgent': sum(1 for a in alerts_list if a['type'] == 'urgent'),
+            'warning': sum(1 for a in alerts_list if a['type'] == 'warning'),
+            'info': sum(1 for a in alerts_list if a['type'] == 'info')
+        }
+        
+        return jsonify({
+            'city': city,
+            'alerts': alerts_list,
+            'alert_counts': alert_counts,
+            'total_alerts': len(alerts_list)
+        })
+        
+    except Exception as e:
+        print(f"❌ Error fetching alerts: {e}")
+        return jsonify({
+            'error': str(e),
+            'alerts': [],
+            'alert_counts': {'urgent': 0, 'warning': 0, 'info': 0}
+        }), 400
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
